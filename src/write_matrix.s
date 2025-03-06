@@ -25,16 +25,153 @@
 write_matrix:
 
     # Prologue
+    addi sp, sp, -4
+    sw ra, 0(sp)
 
+    # open file with read permissions
+    addi sp, sp, -12
+    sw a1, 0(sp)
+    sw a2, 4(sp)
+    sw a3, 8(sp)
 
+    addi a1, zero, 1
 
+    jal fopen
 
+    addi t0, zero, -1
+    beq a0, t0, fopen_error
 
+    lw a1, 0(sp)
+    lw a2, 4(sp)
+    lw a3, 8(sp)
+    addi sp, sp, 12
+    
+    #save #of rows and columns to memory 
+    addi sp, sp, -20
+    sw a0, 0(sp)
+    sw a1, 4(sp)
+    sw a2, 8(sp)
+    sw a3, 12(sp)
 
+    addi t0, zero, 4
+    add a0, t0, zero
+    jal malloc
+    beq a0, zero, malloc_error
+    mv t1, a0
+    sw t1, 16(sp)
 
+    addi t0, zero, 4
+    add a0, t0, zero
+    jal malloc
+    beq a0, zero, malloc_error
+    mv t2, a0
 
+    lw a0, 0(sp)
+    lw a1, 4(sp)
+    lw a2, 8(sp)
+    lw a3, 12(sp)
+    lw t1, 16(sp)
+    addi sp, sp, 20
+
+    sw a2, 0(t1)
+    sw a3, 0(t2)
+
+    # write #of rows and columns to file
+    addi sp, sp, -24
+    sw a0, 0(sp)
+    sw a1, 4(sp)
+    sw a2, 8(sp)
+    sw a3, 12(sp)
+    sw t1, 16(sp)
+    sw t2, 20(sp)
+
+    mv a1, t1
+    li a2, 1
+    li a3, 4
+    jal fwrite
+
+    li a2, 1
+    bne a0, a2, fwrite_error
+
+    lw a0, 0(sp)
+    lw t2, 20(sp)
+
+    mv a1, t2
+    li a2, 1
+    li a3, 4
+    jal fwrite
+
+    li a2, 1
+    bne a0, a2, fwrite_error
+
+    lw a0, 0(sp)
+    lw a1, 4(sp)
+    lw a2, 8(sp)
+    lw a3, 12(sp)
+    lw t1, 16(sp)
+    lw t2, 20(sp)
+    addi sp, sp, 24
+
+    # write matrix value to file
+    addi sp, sp, -20
+    sw a0, 0(sp)
+    sw a1, 4(sp)
+    sw a2, 8(sp)
+    sw a3, 12(sp)
+
+    mul t0, a2, a3
+    sw t0, 16(sp)
+    mv a2, t0
+    li a3, 4
+    jal fwrite
+    lw t0, 16(sp)
+    bne a0, t0, fwrite_error
+
+    lw a0, 0(sp)
+    lw a1, 4(sp)
+    lw a2, 8(sp)
+    lw a3, 12(sp)
+    addi sp, sp, 20
+
+    # close file
+    addi sp, sp, -16
+    sw a0, 0(sp)
+    sw a1, 4(sp)
+    sw a2, 8(sp)
+    sw a3, 12(sp)
+    
+    sw t0, 4(sp)
+
+    jal fclose
+    bne a0, zero, fclose_error
+
+    lw a0, 0(sp)
+    lw a1, 4(sp)
+    lw a2, 8(sp)
+    lw a3, 12(sp)
+    addi sp, sp, 16
 
     # Epilogue
-
+    lw ra, 0(sp)
+    addi sp, sp, 4
 
     jr ra
+
+malloc_error:
+    li a0, 26
+    j exit
+
+
+fopen_error:
+    li a0, 27
+    j exit
+
+
+fclose_error:
+    li a0, 28
+    j exit
+
+
+fwrite_error:
+    li a0, 30
+    j exit
